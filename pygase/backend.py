@@ -445,15 +445,16 @@ class Backend:
         self.server = Server(self.game_state_store)
         logger.info("Backend assembled and ready.")
 
-    def run(self, hostname: str, port: int):
+    def run(self, hostname: str, port: int, interval: float = 0.02):
         """Run state machine and server and bind the server to a given address.
 
         # Arguments
         hostname (str): hostname or IPv4 address the server will be bound to
         port (int): port number the server will be bound to
+        interval (float): (minimum) duration in seconds between consecutive time steps
 
         """
-        self.game_state_machine.run_game_loop_in_thread()
+        self.game_state_machine.run_game_loop_in_thread(interval=interval)
         self.server.run(port, hostname, self.game_state_machine)
         self.game_state_machine.stop()
         logger.info("Backend successfully shut down.")
