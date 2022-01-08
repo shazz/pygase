@@ -56,6 +56,9 @@ Debug logs are also a good way to understand the inner workings of PyGaSe.
 ---
 ## Changes
 
+### 0.3.3
+- changed `run_game_loop` to be more accurate
+
 ### 0.3.1
 - improved documentation
 - minor logging fixes

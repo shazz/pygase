@@ -325,19 +325,32 @@ class GameStateMachine:
         self._game_loop_is_running = True
         logger.info(f"State machine starting game loop with interval of {interval} seconds.")
         while game_state.game_status == GameStatus.get("Active"):
-            t0 = time.time()
+            t0 = time.perf_counter()
+
             update_dict = self.time_step(game_state, dt)
             while not self._event_queue.empty():
                 event = await self._event_queue.get()
                 event_update = await self._universal_event_handler.handle(event, game_state=game_state, dt=dt)
                 update_dict.update(event_update)
-                if time.time() - t0 > 0.95 * interval:
+                if time.perf_counter() - t0 > 0.95 * interval:
                     break
+
             self._game_state_store.push_update(GameStateUpdate(game_state.time_order + 1, **update_dict))
             game_state = self._game_state_store.get_game_state()
-            dt = max(interval, time.time() - t0)
-            await curio.sleep(max(0, interval - dt))
+
+            # real elapsed time since the loop start
+            real_elapsed_time = time.perf_counter() - t0
+
+            # consume the remaining time to reach the interval
+            delta = interval - real_elapsed_time
+            while delta > 0.0000001:
+                delta = interval - (time.perf_counter() - t0)
+
+            # adding the real spent time to the game time
+            dt = interval - delta
             self.game_time += dt
+            logger.info(f"loop time: {round(dt, 4)} vs expected {round(interval, 4)} => delta {round(dt - interval, 6)}")
+
         logger.info("Game loop stopped.")
         self._game_loop_is_running = False
 
